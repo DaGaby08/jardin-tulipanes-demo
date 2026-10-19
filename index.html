@@ -2,77 +2,141 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jardín de tulipanes</title>
 <style>
-:root{--bg:#faf6f1;--fg:#3a2a33;--card:#fff;--ac:#d6457a}
+:root{--bg:#faf6f1;--fg:#3a2a33;--card:#fff;--ac:#d6457a;--bd:#8883;--soft:#8881}
 @media(prefers-color-scheme:dark){:root{--bg:#1b1722;--fg:#f1e8ee;--card:#2a2433}}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:20px}
-#stage{flex:1 1 360px;display:flex;justify-content:center;align-items:flex-start}
-canvas{max-width:100%;max-height:80vh;border-radius:16px;box-shadow:0 10px 40px #0004}
-#panel{flex:0 1 320px;background:var(--card);padding:18px;border-radius:16px;display:flex;flex-direction:column;gap:12px}
-h1{margin:0;font-size:1.3rem}
-label{font-size:.85rem;display:flex;flex-direction:column;gap:4px}
-input,select,button{font:inherit;padding:8px;border-radius:8px;border:1px solid #8884;background:transparent;color:inherit}
-button{cursor:pointer;background:var(--ac);color:#fff;border:0;font-weight:600}
-button.sec{background:transparent;color:var(--fg);border:1px solid #8886}
-.row{display:flex;gap:8px}.row>*{flex:1}
-#msg{font-size:.8rem;min-height:1em;opacity:.8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+.app{display:grid;grid-template-columns:1fr 360px;height:100dvh}
+#stage{display:flex;align-items:center;justify-content:center;padding:24px;min-width:0;min-height:0}
+canvas{border-radius:16px;box-shadow:0 10px 40px #0004;display:block;flex:none}
+#panel{overflow:auto;padding:20px;background:var(--card);border-left:1px solid var(--bd);display:flex;flex-direction:column;gap:18px;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+h1{margin:0;font-size:1.25rem}
+.grp{display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:.8rem;font-weight:600;opacity:.75;display:flex;justify-content:space-between}
+input[type=text],select,button{font:inherit;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--bd);background:transparent;color:inherit}
+select{background:var(--card)}
+input[type=range]{width:100%;min-height:32px;accent-color:var(--ac)}
+button{cursor:pointer;font-weight:600}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--soft);padding:4px;border-radius:12px}
+.seg button{border:0;border-radius:9px;min-height:40px}
+.seg button[aria-pressed=true]{background:var(--ac);color:#fff}
+.sw{display:flex;gap:10px;flex-wrap:wrap}
+.sw button{width:40px;height:40px;min-height:0;padding:0;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px var(--bd)}
+.sw button[aria-pressed=true]{border-color:var(--card);box-shadow:0 0 0 3px var(--ac)}
+.btn{background:var(--ac);color:#fff;border:0}
+.btn:disabled{opacity:.6;cursor:wait}
+.sec{background:transparent}
+#bar{height:6px;border-radius:3px;background:var(--soft);overflow:hidden;display:none}
+#bar i{display:block;height:100%;width:0;background:var(--ac)}
+#msg{font-size:.8rem;opacity:.8;min-height:1.2em}
+.hint{font-size:.75rem;opacity:.65;line-height:1.4;margin:0}
+
+@media(max-width:860px){
+  .app{display:flex;flex-direction:column;height:auto;min-height:100dvh}
+  #stage{position:sticky;top:0;z-index:5;height:46dvh;padding:10px;background:var(--bg)}
+  #panel{border-left:0;border-radius:22px 22px 0 0;box-shadow:0 -6px 24px #0002;overflow:visible;flex:1}
+}
+@media(max-width:860px) and (max-height:520px){
+  .app{display:grid;grid-template-columns:1fr 300px;height:100dvh}
+  #stage{position:static;height:auto}
+  #panel{overflow:auto;border-radius:0}
+}
 </style>
 </head>
 <body>
+<div class="app">
 <div id="stage"><canvas id="c"></canvas></div>
 <div id="panel">
   <h1>🌷 Mi jardín de tulipanes</h1>
-  <div class="row">
-    <button class="sec" id="dia">☀️ Día</button>
-    <button class="sec" id="noche">🌙 Noche</button>
+
+  <div class="grp"><div class="lbl">Momento</div>
+    <div class="seg" id="tod">
+      <button data-v="d" aria-pressed="true">☀️ Día</button>
+      <button data-v="n" aria-pressed="false">🌙 Noche</button>
+    </div>
   </div>
-  <label>Formato
-    <select id="fmt"><option value="p">Celular (vertical)</option><option value="l">Laptop (horizontal)</option></select>
-  </label>
-  <label>Texto
-    <input id="txt" value="Para ti 🌷" maxlength="60">
-  </label>
-  <label>Letra
+
+  <div class="grp"><div class="lbl">Formato</div>
+    <div class="seg" id="fmt">
+      <button data-v="p" aria-pressed="true">📱 Celular</button>
+      <button data-v="l" aria-pressed="false">💻 Laptop</button>
+    </div>
+  </div>
+
+  <div class="grp"><div class="lbl">Texto</div>
+    <input type="text" id="txt" value="Para ti 🌷" maxlength="60" enterkeyhint="done">
+  </div>
+
+  <div class="grp"><div class="lbl">Letra</div>
     <select id="font">
       <option value="Georgia, serif">Elegante</option>
       <option value="'Brush Script MT', cursive">Manuscrita</option>
       <option value="system-ui, sans-serif">Moderna</option>
       <option value="'Courier New', monospace">Máquina</option>
     </select>
-  </label>
-  <label>Color de tulipanes
-    <select id="col">
-      <option value="mix">Mixtos</option><option value="330">Rosa</option><option value="350">Rojo</option>
-      <option value="48">Amarillo</option><option value="280">Morado</option><option value="22">Naranja</option><option value="0w">Blanco</option>
-    </select>
-  </label>
-  <label>Cantidad de tulipanes
+  </div>
+
+  <div class="grp"><div class="lbl">Color de tulipanes</div>
+    <div class="sw" id="col"></div>
+  </div>
+
+  <div class="grp"><div class="lbl"><span>Cantidad de tulipanes</span><span id="nv">30</span></div>
     <input type="range" id="n" min="8" max="60" value="30">
-  </label>
+  </div>
+
   <button class="sec" id="seed">🌱 Replantar jardín</button>
-  <button id="png">⬇️ Descargar fondo (PNG)</button>
-  <button id="gif">⬇️ Descargar animado (GIF)</button>
-  <div id="msg"></div>
+
+  <div class="grp"><div class="lbl">Descargar</div>
+    <button class="btn" id="png">🖼️ Fondo (PNG)</button>
+    <div class="seg" id="q">
+      <button data-v="720" aria-pressed="true">HD 720p</button>
+      <button data-v="1080" aria-pressed="false">Full HD 1080p</button>
+    </div>
+    <button class="btn" id="vid">🎬 Video para fondo animado</button>
+    <div id="bar"><i></i></div>
+    <div id="msg"></div>
+    <p class="hint">El video dura 8 segundos y está hecho para repetirse sin cortes. Mientras se graba, no cambies de pestaña.</p>
+  </div>
+</div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-const cv=$('c'),ctx=cv.getContext('2d');
-let night=false,seed=1,flowers=[],flies=[];
-const TAU=Math.PI*2;
+const cv=$('c'),ctx=cv.getContext('2d'),stage=$('stage');
+let night=false,seed=1,flowers=[],flies=[],recording=false;
+let portrait=innerWidth<860||innerHeight>innerWidth,colorSel='mix',quality='720';
+const TAU=Math.PI*2,CYCLE=4,LOOPS=2; // un ciclo = 4 s; el video = 2 ciclos = 8 s
 const rnd=s=>()=>(s=(s*16807)%2147483647)/2147483647;
 
-function size(big){const p=$('fmt').value==='p';return big?(p?[1080,1920]:[1920,1080]):(p?[450,800]:[800,450])}
+const COLORS=[['mix','conic-gradient(#e0407f,#e8a63a,#8a4cc0,#e0407f)','Mixtos'],['330','hsl(330,75%,52%)','Rosa'],['350','hsl(350,75%,50%)','Rojo'],['48','hsl(48,85%,55%)','Amarillo'],['280','hsl(280,60%,50%)','Morado'],['22','hsl(22,85%,55%)','Naranja'],['0w','#f4f0f4','Blanco']];
+COLORS.forEach(([v,bg,name])=>{const b=document.createElement('button');b.dataset.v=v;b.style.background=bg;b.title=b.ariaLabel=name;b.setAttribute('aria-pressed',v===colorSel);$('col').appendChild(b)});
+
+function seg(id,cb){
+  const el=$(id);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    cb(b.dataset.v);
+  });
+}
+function setSeg(id,v){$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===v))}
+
+function outSize(){
+  const hd=quality==='1080';
+  const a=hd?1080:720,b=hd?1920:1280;
+  return portrait?[a,b]:[b,a];
+}
 
 function build(){
-  const r=rnd(seed*7919+13),n=+$('n').value,c=$('col').value;
+  const r=rnd(seed*7919+13),n=+$('n').value,c=colorSel;
   const hues=[330,350,48,280,22,0];
   flowers=[];
   for(let i=0;i<n;i++){
-    const d=r(); // 0 = lejos, 1 = cerca
+    const d=r();
     let h=c==='mix'?hues[(r()*hues.length)|0]:parseInt(c),white=c==='0w'||(c==='mix'&&h===0);
     flowers.push({x:r(),d,h,white,ph:r(),leaf:r()>.5});
   }
@@ -99,9 +163,9 @@ function tulip(g,x,y,s,f,t){
   g.restore();
 }
 
+// t va de 0 a 1 y TODO se repite exactamente en t=1 (loop perfecto)
 function draw(g,t,w,h){
   const u=Math.min(w,h);
-  // cielo
   let k=g.createLinearGradient(0,0,0,h*.75);
   if(night){k.addColorStop(0,'#0b1030');k.addColorStop(.6,'#2a2360');k.addColorStop(1,'#5b3a7a')}
   else{k.addColorStop(0,'#7cc4f0');k.addColorStop(.65,'#cfeaf7');k.addColorStop(1,'#ffe3cf')}
@@ -115,21 +179,18 @@ function draw(g,t,w,h){
     g.fillStyle='#fff6c8';g.shadowColor='#ffe680';g.shadowBlur=u*.1;
     g.beginPath();g.arc(w*.22,h*.13,u*.08,0,TAU);g.fill();g.shadowBlur=0;
     g.fillStyle='#ffffffcc';
-    for(let i=0;i<3;i++){const cx=((i*.37+.1+t)%1.4-.2)*w,cy=h*(.2+i*.07);
+    for(let i=0;i<3;i++){const cx=(((i*.37+.1+t)%1)*1.6-.3)*w,cy=h*(.2+i*.07);
       for(let j=0;j<4;j++){g.beginPath();g.ellipse(cx+j*u*.05,cy+(j%2)*-u*.015,u*.07,u*.035,0,0,TAU);g.fill()}}
   }
-  // colinas
   g.fillStyle=night?'#1d4a4a':'#8fcf8a';
   g.beginPath();g.moveTo(0,h);g.lineTo(0,h*.66);g.bezierCurveTo(w*.3,h*.58,w*.6,h*.74,w,h*.62);g.lineTo(w,h);g.fill();
   g.fillStyle=night?'#163a3c':'#5fb36a';
   g.beginPath();g.moveTo(0,h);g.lineTo(0,h*.75);g.bezierCurveTo(w*.35,h*.68,w*.7,h*.82,w,h*.72);g.lineTo(w,h);g.fill();
-  // tulipanes
   for(const f of flowers){
     const y=h*(.74+f.d*.25),s=u*(.018+f.d*.05);
     tulip(g,f.x*w,y,s,f,t);
   }
   if(night){g.fillStyle='#0a0a3a44';g.fillRect(0,0,w,h)}
-  // luciérnagas
   if(night){
     g.globalCompositeOperation='lighter';
     for(const m of flies){
@@ -141,7 +202,6 @@ function draw(g,t,w,h){
     }
     g.globalCompositeOperation='source-over';
   }
-  // texto
   const T=$('txt').value;
   if(T){
     const fs=u*(w<h?.075:.09);
@@ -152,76 +212,87 @@ function draw(g,t,w,h){
     for(const wd of words){const tt=cur?cur+' '+wd:wd;if(g.measureText(tt).width>w*.85&&cur){lines.push(cur);cur=wd}else cur=tt}
     lines.push(cur);
     lines.forEach((l,i)=>g.fillText(l,w/2,h*(w<h?.32:.3)+(i-(lines.length-1)/2)*fs*1.2));
-    g.shadowColor='transparent';
+    g.shadowColor='transparent';g.shadowBlur=0;g.shadowOffsetY=0;
   }
 }
 
-// vista previa
-function resize(){const[w,h]=size();cv.width=w;cv.height=h;build()}
-function loop(){draw(ctx,(performance.now()/4000)%1,cv.width,cv.height);requestAnimationFrame(loop)}
+// Vista previa: se ajusta al espacio disponible
+function fit(){
+  const r=stage.getBoundingClientRect(),cs=getComputedStyle(stage);
+  const pw=r.width-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const ph=r.height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  if(pw<=0||ph<=0)return;
+  const ar=portrait?9/16:16/9;
+  let cw=pw,ch=cw/ar;if(ch>ph){ch=ph;cw=ch*ar}
+  cv.style.width=cw+'px';cv.style.height=ch+'px';
+  const dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);
+}
+function loop(){
+  if(!recording)draw(ctx,(performance.now()/1000/CYCLE)%1,cv.width,cv.height);
+  requestAnimationFrame(loop);
+}
 
-function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const tag=()=>night?'noche':'dia';
 
 $('png').onclick=()=>{
-  const[w,h]=size(true),c=document.createElement('canvas');c.width=w;c.height=h;
-  draw(c.getContext('2d'),.25,w,h);
-  c.toBlob(b=>save(b,'jardin-tulipanes-'+(night?'noche':'dia')+'.png'));
+  const c=document.createElement('canvas');
+  c.width=portrait?1080:1920;c.height=portrait?1920:1080;
+  draw(c.getContext('2d'),.25,c.width,c.height);
+  c.toBlob(b=>save(b,'jardin-tulipanes-'+tag()+'.png'));
 };
 
-// codificador GIF mínimo (paleta fija 6x7x6 con dithering)
-function encodeGIF(frames,w,h,delay){
-  const o=[],p=(...a)=>{for(const x of a)o.push(x)},s=n=>p(n&255,n>>8);
-  p(71,73,70,56,57,97);s(w);s(h);p(247,0,0);
-  for(let r=0;r<6;r++)for(let g=0;g<7;g++)for(let b=0;b<6;b++)p(r*51,Math.round(g*42.5),b*51);
-  for(let i=252;i<256;i++)p(0,0,0);
-  p(33,255,11);'NETSCAPE2.0'.split('').forEach(c=>p(c.charCodeAt(0)));p(3,1,0,0,0);
-  for(const f of frames){
-    p(33,249,4,4);s(delay);p(0,0);p(44);s(0);s(0);s(w);s(h);p(0,8);
-    const out=[];let dict=new Map(),next=258,cs=9,buf=0,bits=0;
-    const emit=c=>{buf|=c<<bits;bits+=cs;while(bits>=8){out.push(buf&255);buf>>=8;bits-=8}};
-    emit(256);let cur=f[0];
-    for(let i=1;i<f.length;i++){
-      const k=(cur<<8)|f[i],v=dict.get(k);
-      if(v!==undefined){cur=v;continue}
-      emit(cur);
-      if(next===4096){emit(256);dict.clear();next=258;cs=9}
-      else{if(next>=(1<<cs))cs++;dict.set(k,next++)}
-      cur=f[i];
-    }
-    emit(cur);emit(257);if(bits>0)out.push(buf&255);
-    for(let i=0;i<out.length;i+=255){const ch=out.slice(i,i+255);p(ch.length);for(const x of ch)o.push(x)}
-    p(0);
-  }
-  p(59);return new Uint8Array(o);
-}
-const BAY=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
-$('gif').onclick=async()=>{
-  const m=$('msg'),btn=$('gif');btn.disabled=true;
-  const p=$('fmt').value==='p',w=p?360:640,h=p?640:360,N=36;
+// Video: graba 2 ciclos exactos (8 s) en tiempo real
+$('vid').onclick=()=>{
+  const m=$('msg'),btn=$('vid'),bar=$('bar');
+  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){m.textContent='Tu navegador no puede grabar video. Prueba con Chrome, Edge o Safari actualizado.';return}
+  const mime=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+  if(!mime){m.textContent='Tu navegador no soporta grabación de video.';return}
+  const ext=mime.includes('mp4')?'mp4':'webm',[w,h]=outSize();
   const c=document.createElement('canvas');c.width=w;c.height=h;
-  const g=c.getContext('2d',{willReadFrequently:true}),frames=[];
-  for(let i=0;i<N;i++){
-    m.textContent=`Creando GIF… ${Math.round(i/N*100)}%`;
-    await new Promise(r=>setTimeout(r));
-    draw(g,i/N,w,h);
-    const d=g.getImageData(0,0,w,h).data,ix=new Uint8Array(w*h);
-    for(let y=0,j=0;y<h;y++)for(let x=0;x<w;x++,j++){
-      const e=(BAY[(x&3)|((y&3)<<2)]-7.5)*3.2,q=j*4;
-      const R=Math.min(5,Math.max(0,Math.round((d[q]+e)/51))),G=Math.min(6,Math.max(0,Math.round((d[q+1]+e)/42.5))),B=Math.min(5,Math.max(0,Math.round((d[q+2]+e)/51)));
-      ix[j]=R*42+G*6+B;
-    }
-    frames.push(ix);
-  }
-  save(new Blob([encodeGIF(frames,w,h,8)],{type:'image/gif'}),'jardin-tulipanes-'+(night?'noche':'dia')+'.gif');
-  m.textContent='¡Listo! GIF descargado 🌷';btn.disabled=false;
+  const g=c.getContext('2d');
+  draw(g,0,w,h);
+  const rec=new MediaRecorder(c.captureStream(30),{mimeType:mime,videoBitsPerSecond:quality==='1080'?14e6:8e6});
+  const parts=[];rec.ondataavailable=e=>{if(e.data.size)parts.push(e.data)};
+  const DUR=CYCLE*LOOPS;
+  rec.onstop=()=>{
+    recording=false;btn.disabled=false;bar.style.display='none';
+    save(new Blob(parts,{type:mime}),`jardin-tulipanes-${tag()}-loop.${ext}`);
+    m.textContent=`¡Listo! Video ${ext.toUpperCase()} descargado 🌷`;
+  };
+  recording=true;btn.disabled=true;bar.style.display='block';
+  let t0;
+  rec.start();
+  const tick=now=>{
+    if(t0===undefined)t0=now;
+    const el=(now-t0)/1000;
+    bar.firstElementChild.style.width=Math.min(100,el/DUR*100)+'%';
+    m.textContent=`Grabando… ${Math.max(0,Math.ceil(DUR-el))} s`;
+    if(el>=DUR){rec.stop();return}
+    draw(g,(el/CYCLE)%1,w,h);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 };
 
-$('dia').onclick=()=>night=false;
-$('noche').onclick=()=>night=true;
-$('fmt').onchange=resize;
-$('n').oninput=build;$('col').onchange=build;
+seg('tod',v=>night=v==='n');
+seg('fmt',v=>{portrait=v==='p';fit()});
+seg('q',v=>quality=v);
+$('col').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  colorSel=b.dataset.v;
+  $('col').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  build();
+});
+$('n').oninput=()=>{$('nv').textContent=$('n').value;build()};
 $('seed').onclick=()=>{seed++;build()};
-resize();loop();
+$('txt').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
+
+setSeg('fmt',portrait?'p':'l');
+new ResizeObserver(fit).observe(stage);
+addEventListener('resize',fit);
+build();fit();loop();
 </script>
 </body>
 </html>
